@@ -1,60 +1,49 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getProdutosTodos } from "@/services/api";
+import { getProdutosTodos } from "@/services/api"; 
+import { Header } from "./components/header"; 
+import { ProductCard } from "./components/ProductCard";
 
 export default function Home() {
-  const [produtos, setProdutos] = useState([]);
-  const [busca, setBusca] = useState("");
+  const [produtos, setProdutos] = useState<any[]>([]);
+  const [pesquisa, setPesquisa] = useState("");
 
   useEffect(() => {
     getProdutosTodos().then((resultado) => {
-      setProdutos(resultado.data.products);
-    });
+      // Ajuste conforme o retorno da sua API (geralmente data.products)
+      setProdutos(resultado.data.products || []);
+    }).catch(err => console.error("Erro ao carregar produtos", err));
   }, []);
 
-  // Filtra os produtos pelo título
-  const produtosFiltrados = produtos.filter((produto) =>
-    produto.title.toLowerCase().includes(busca.toLowerCase())
+  // Filtra os produtos baseados no que foi digitado no Header
+  const produtosFiltrados = produtos.filter((p) =>
+    p.title.toLowerCase().includes(pesquisa.toLowerCase())
   );
 
   return (
-    <div>
-      <header>
-        <h1>Pesquisa de produtos</h1>
-        <input
-          type="text"
-          placeholder="Digite o nome do produto..."
-          value={busca}
-          onChange={(e) => setBusca(e.target.value)}
-          style={{
-            padding: "8px",
-            marginTop: "10px",
-            width: "300px",
-          }}
-        />
-      </header>
+    <div className="min-h-screen">
+      {/* O Header fica aqui no topo, recebendo a função de busca */}
+      <Header setTermo={setPesquisa} />
 
-      <main style={{ display: "flex", flexWrap: "wrap", gap: "16px", marginTop: "20px" }}>
-        {produtosFiltrados.map((produto) => (
-          <div
-            key={produto.id}
-            style={{
-              border: "1px solid #ccc",
-              borderRadius: "8px",
-              padding: "10px",
-              width: "200px",
-            }}
-          >
-            <img
-              src={produto.thumbnail}
-              alt={produto.title}
-              style={{ width: "100%", borderRadius: "5px" }}
-            />
-            <h3>{produto.title}</h3>
-            <p>R$ {produto.price}</p>
-          </div>
-        ))}
+      <main className="max-w-7xl mx-auto p-6">
+        <h2 className="text-xl font-semibold mb-6 text-gray-700">
+          {pesquisa ? 'Resultados para: ${pesquisa}' : "Lista de Produtos"}
+        </h2>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          {produtosFiltrados.length > 0 ? (
+            produtosFiltrados.map((item) => (
+              <ProductCard key={item.id} produto={item} />
+            ))
+          ) : (
+            <div className="col-span-full text-center py-20">
+              <p className="text-gray-500 text-lg">
+                {pesquisa ? "Nenhum produto encontrado." : "Carregando produtos..."}
+              </p>
+            </div>
+          )}
+        </div>
       </main>
     </div>
   );
